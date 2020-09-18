@@ -246,11 +246,15 @@ public class EspressoFormatter {
                         for(int cidx = 0; cidx < io_fio_count; cidx++) strBuf.append('-');
                         for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) strBuf.append((((idx >> cidx) & 0x01) != 0) ? '1' : '0');
                         strBuf.append(' ');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < io_outs_count; cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_O()+io_outs_count; cidx++) strBuf.append('-');
+                        
+                        ArrayList<Character> outArray = new ArrayList<>();
+                        for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) outArray.add('-');
+                        for(int cidx = 0; cidx < io_outs_count; cidx++) outArray.add('-');
+                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) outArray.add('-');
+                        for(int cidx = 0; cidx < pSpecs.getPinCount_O()+io_outs_count; cidx++) outArray.add('-');
 
+                        if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
+                        else for(char out : outArray) strBuf.append(out);
                         strBuf.append('\n');
                         padding.add(strBuf.toString());
                     }
