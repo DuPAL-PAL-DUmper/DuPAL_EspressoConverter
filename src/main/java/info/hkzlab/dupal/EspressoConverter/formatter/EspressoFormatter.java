@@ -11,7 +11,7 @@ import info.hkzlab.dupal.EspressoConverter.utilities.BitUtils;
 public class EspressoFormatter {
     private EspressoFormatter() {};
 
-    public static String formatEspressoTableHeader(PALSpecs pSpecs, int ioAsOutMask) {
+    public static String formatEspressoTableHeader(PALSpecs pSpecs, int ioAsOutMask, int outPin) {
         StringBuffer strBuf = new StringBuffer();
         int ioAsOut_W = BitUtils.scatterBitField(BitUtils.consolidateBitField(ioAsOutMask, pSpecs.getMask_IO_R()), pSpecs.getMask_IO_W());
         int io_outCount = BitUtils.countBits(ioAsOutMask);
@@ -23,7 +23,8 @@ public class EspressoFormatter {
 
         strBuf.append("# " + pSpecs.toString() + "\n");
         strBuf.append(".i " + inCount + "\n"); // Inputs, IO as inputs, IO as outputs (as feedbacks), registered outputs (as feedbacks)
-        strBuf.append(".o " + (outCount_oe + outCount) + "\n"); // Outputs, IO as outputs, Registered Outputs, then an out for all of those as OE
+        if(outPin >= 0) strBuf.append(".o 1\n");
+        else strBuf.append(".o " + (outCount_oe + outCount) + "\n"); // Outputs, IO as outputs, Registered Outputs, then an out for all of those as OE
         
         strBuf.append(".ilb ");
         for(int idx = 0; idx < 32; idx++) if(((pSpecs.getMask_IN() >> idx) & 0x01) > 0) strBuf.append(pSpecs.getLabels_IN()[idx] + " ");
@@ -33,11 +34,13 @@ public class EspressoFormatter {
         strBuf.append("\n");
         
         strBuf.append(".ob ");
-        for(int idx = 0; idx < 32; idx++) if(((pSpecs.getMask_O_W() >> idx) & 0x01) > 0) strBuf.append(pSpecs.getLabels_O()[idx] + " ");
-        for(int idx = 0; idx < 32; idx++) if((((pSpecs.getMask_IO_W() & ioAsOut_W) >> idx) & 0x01) > 0) strBuf.append(pSpecs.getLabels_IO()[idx] + " ");
-        for(int idx = 0; idx < 32; idx++) if(((pSpecs.getMask_RO_W() >> idx) & 0x01) > 0) strBuf.append(pSpecs.getLabels_RO()[idx] + " ");
-        for(int idx = 0; idx < 32; idx++) if(((pSpecs.getMask_O_W() >> idx) & 0x01) > 0) strBuf.append(pSpecs.getLabels_O()[idx] + "oe ");
-        for(int idx = 0; idx < 32; idx++) if((((pSpecs.getMask_IO_W() & ioAsOut_W) >> idx) & 0x01) > 0) strBuf.append(pSpecs.getLabels_IO()[idx] + "oe ");
+        ArrayList<String> obLabels = new ArrayList<>();
+        for(int idx = 0; idx < 32; idx++) if(((pSpecs.getMask_O_W() >> idx) & 0x01) > 0) obLabels.add(pSpecs.getLabels_O()[idx] + " ");
+        for(int idx = 0; idx < 32; idx++) if((((pSpecs.getMask_IO_W() & ioAsOut_W) >> idx) & 0x01) > 0) obLabels.add(pSpecs.getLabels_IO()[idx] + " ");
+        for(int idx = 0; idx < 32; idx++) if(((pSpecs.getMask_RO_W() >> idx) & 0x01) > 0) obLabels.add(pSpecs.getLabels_RO()[idx] + " ");
+        for(int idx = 0; idx < 32; idx++) if(((pSpecs.getMask_O_W() >> idx) & 0x01) > 0) obLabels.add(pSpecs.getLabels_O()[idx] + "oe ");
+        for(int idx = 0; idx < 32; idx++) if((((pSpecs.getMask_IO_W() & ioAsOut_W) >> idx) & 0x01) > 0) obLabels.add(pSpecs.getLabels_IO()[idx] + "oe ");
+        for(String label : obLabels) strBuf.append(label);
         strBuf.append("\n");
        
         strBuf.append(".phase ");
@@ -71,9 +74,8 @@ public class EspressoFormatter {
 
             ins = BitUtils.consolidateBitField(ol.inputs, pSpecs.getMask_IN()); // inputs
             io_ins = BitUtils.consolidateBitField(ol.inputs, pSpecs.getMask_IO_W() & ~ioAsOut_W); // IOs as inputs
-            io_fio = BitUtils.consolidateBitField(ol.src.out, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks)
-            io_fio_hiz = BitUtils.consolidateBitField(ol.src.hiz, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks) - hiz flags
-            io_fio &= ~io_fio_hiz;
+            io_fio = BitUtils.consolidateBitField(ol.src.out, ioAsOutMask); // IO as outputs (feedbacks)
+            io_fio_hiz = BitUtils.consolidateBitField(ol.src.hiz, ioAsOutMask); // IO as outputs (feedbacks) - hiz flags
 
             ro_ps = BitUtils.consolidateBitField(ol.src.out, pSpecs.getMask_RO_R()); // Old Registered Outputs
 
@@ -116,7 +118,10 @@ public class EspressoFormatter {
             for(int idx = 0; idx < pSpecs.getPinCount_O(); idx++) strBuf.append((char)(((outs_hiz >> idx) & 0x01) + 0x30));
             for(int idx = 0; idx < io_outs_count; idx++) strBuf.append((char)(((io_outs_hiz >> idx) & 0x01) + 0x30));
 
+            //System.out.println(String.format("S:%02X|%02X I:%06X O:%02X|%02X", ol.src.out, ol.src.hiz, ol.inputs, ol.dst.out, ol.dst.hiz)+ " -> " + strBuf.toString());
+
             strBuf.append('\n');
+
             tableRows.add(strBuf.toString());
         }
 

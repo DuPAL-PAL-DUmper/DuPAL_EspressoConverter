@@ -53,7 +53,7 @@ public class ContentParser {
         for(int idx = 0; idx < olArray.length(); idx++) {
             JSONObject ol = olArray.getJSONObject(idx);
             OutStatePins src = new OutStatePins(ol.getJSONObject("source").getInt("outputs"), ol.getJSONObject("source").getInt("hiz"));
-            OutStatePins dst = new OutStatePins(ol.getJSONObject("destination").getInt("outputs"), ol.getJSONObject("source").getInt("hiz"));
+            OutStatePins dst = new OutStatePins(ol.getJSONObject("destination").getInt("outputs"), ol.getJSONObject("destination").getInt("hiz"));
 
             olList.add(new OLink(ol.getInt("inputs"), src, dst));
         }
