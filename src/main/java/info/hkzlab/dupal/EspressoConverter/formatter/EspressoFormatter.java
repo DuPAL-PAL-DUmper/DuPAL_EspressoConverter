@@ -59,14 +59,14 @@ public class EspressoFormatter {
     }
   
     public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks) {
-        return formatEspressoTable(pSpecs, ioAsOutMask, oLinks, rLinks, true, -1);
+        return formatEspressoTable(pSpecs, ioAsOutMask, oLinks, rLinks, -1);
     }
     
-    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, boolean padTable, int singleOutSelection) {
+    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, int singleOutSelection) {
         int ioAsOut_W = BitUtils.scatterBitField(BitUtils.consolidateBitField(ioAsOutMask, pSpecs.getMask_IO_R()), pSpecs.getMask_IO_W());
         HashSet<String> tableRows = new HashSet<>();
 
-        int ins, io_ins, io_fio, io_fio_hiz, ro_ps, outs, outs_hiz, io_outs, io_outs_hiz, ro;
+        int ins, io_ins, io_fio, io_fio_hiz, io_fio_dst, io_fio_hiz_dst, ro_ps, outs, outs_hiz, io_outs, io_outs_hiz, ro;
         int io_ins_count = BitUtils.countBits(pSpecs.getMask_IO_W() & ~ioAsOut_W);
         int io_fio_count = BitUtils.countBits(pSpecs.getMask_IO_R() & ioAsOutMask);
         int io_outs_count = BitUtils.countBits(ioAsOutMask);
@@ -83,6 +83,8 @@ public class EspressoFormatter {
             io_ins = BitUtils.consolidateBitField(ol.inputs, pSpecs.getMask_IO_W() & ~ioAsOut_W); // IOs as inputs
             io_fio = BitUtils.consolidateBitField(ol.src.out, ioAsOutMask); // IO as outputs (feedbacks)
             io_fio_hiz = BitUtils.consolidateBitField(ol.src.hiz, ioAsOutMask); // IO as outputs (feedbacks) - hiz flags
+            io_fio_dst = BitUtils.consolidateBitField(ol.dst.out, ioAsOutMask); // IO as outputs (feedbacks) coming from destination state
+            io_fio_hiz_dst = BitUtils.consolidateBitField(ol.dst.hiz, ioAsOutMask); // IO as outputs (feedbacks) coming from destination state - hiz flags
 
             ro_ps = BitUtils.consolidateBitField(ol.src.out, pSpecs.getMask_RO_R()); // Old Registered Outputs
 
@@ -96,17 +98,23 @@ public class EspressoFormatter {
             if(io_fio_hiz != 0) {
                 int maxVal = 1 << BitUtils.countBits(io_fio_hiz);
                 for(int idx = 0; idx < maxVal; idx++) {
-                    int fio_comb = io_fio | BitUtils.scatterBitField(idx, io_fio_hiz);
+                    int fio_comb = io_fio_dst | BitUtils.scatterBitField(idx, io_fio_hiz_dst);
                     visitedFIOs.add(fio_comb);
                 }
             } else visitedFIOs.add(io_fio);
 
             // Print the inputs
-            for(int idx = 0; idx < pSpecs.getPinCount_IN(); idx++) strBuf.append((char)(((ins >> idx) & 0x01) + 0x30));
-            for(int idx = 0; idx < io_ins_count; idx++) strBuf.append((char)(((io_ins >> idx) & 0x01) + 0x30));
-            for(int idx = 0; idx < io_fio_count; idx++) {
-                boolean fio_pin_hiz = ((io_fio_hiz >> idx) & 0x01) != 0;
-                strBuf.append(fio_pin_hiz ? '-' : (char)(((io_fio >> idx) & 0x01) + 0x30));
+            int in_pin_cnt = 0 - pSpecs.getPinCount_IN() - io_ins_count;
+            for(int idx = 0; idx < pSpecs.getPinCount_IN(); idx++, in_pin_cnt++) strBuf.append((char)(((ins >> idx) & 0x01) + 0x30));
+            for(int idx = 0; idx < io_ins_count; idx++, in_pin_cnt++) strBuf.append((char)(((io_ins >> idx) & 0x01) + 0x30));
+            for(int idx = 0; idx < io_fio_count; idx++, in_pin_cnt++) {
+                if((in_pin_cnt == singleOutSelection) || (singleOutSelection < 0)) {
+                    boolean fio_pin_hiz = ((io_fio_hiz >> idx) & 0x01) != 0;
+                    strBuf.append(fio_pin_hiz ? '-' : (char)(((io_fio >> idx) & 0x01) + 0x30));
+                } else {
+                    boolean fio_pin_hiz_dst = ((io_fio_hiz_dst >> idx) & 0x01) != 0;
+                    strBuf.append(fio_pin_hiz_dst ? '-' : (char)(((io_fio_dst >> idx) & 0x01) + 0x30));                       
+                }
             }
             for(int idx = 0; idx < pSpecs.getPinCount_RO(); idx++) strBuf.append((char)(((ro_ps >> idx) & 0x01) + 0x30));
 
@@ -140,7 +148,8 @@ public class EspressoFormatter {
             io_ins = BitUtils.consolidateBitField(rl.inputs, pSpecs.getMask_IO_W() & ~ioAsOut_W); // IOs as inputs
             io_fio = BitUtils.consolidateBitField(rl.middle.out, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks)
             io_fio_hiz = BitUtils.consolidateBitField(rl.middle.hiz, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks) - hiz flags
-            io_fio &= ~io_fio_hiz;
+            io_fio_dst = BitUtils.consolidateBitField(rl.dst.out, ioAsOutMask); // IO as outputs (feedbacks) coming from destination state
+            io_fio_hiz_dst = BitUtils.consolidateBitField(rl.dst.hiz, ioAsOutMask); // IO as outputs (feedbacks) coming from destination state - hiz flags
             ro_ps = BitUtils.consolidateBitField(rl.middle.out, pSpecs.getMask_RO_R()); // Old Registered Outputs
 
             visitedROs.add(ro_ps);
@@ -177,98 +186,7 @@ public class EspressoFormatter {
             tableRows.add(strBuf.toString());
         }
 
-        ArrayList<String> padding = new ArrayList<>();
-        if(padTable) {
-            int outAlwaysOff = 0xFF;
-            int outAlwaysOn = 0xFF;
-
-            for(OLink ol : oLinks) {
-                outAlwaysOff &= ol.src.hiz;
-                outAlwaysOff &= ol.dst.hiz;
-
-                outAlwaysOn &= ~ol.src.hiz;
-                outAlwaysOn &= ~ol.dst.hiz;
-            }
-            
-            int oAOff = BitUtils.consolidateBitField(outAlwaysOff, pSpecs.getMask_O_R());
-            int oAOn = BitUtils.consolidateBitField(outAlwaysOn, pSpecs.getMask_O_R());
-            int ioAOff = BitUtils.consolidateBitField(outAlwaysOff, ioAsOutMask);
-            int ioAOn = BitUtils.consolidateBitField(outAlwaysOn, ioAsOutMask);
-
-            if(BitUtils.countBits(ioAsOutMask) > 0) {
-                // Feedback IOs
-                padding.add("# Padding FIOs START\n");
-                for(int idx = 0; idx < (1 << BitUtils.countBits(ioAsOutMask)); idx++) {
-                    if(!visitedFIOs.contains(idx)) {
-                        strBuf.delete(0, strBuf.length());
-
-                        // Inputs
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_IN(); cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < io_ins_count; cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < io_fio_count; cidx++) strBuf.append((((idx >> cidx) & 0x01) != 0) ? '1' : '0');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) strBuf.append('-');
-                        strBuf.append(' ');
-
-                        ArrayList<Character> outArray = new ArrayList<>();
-                        // Outputs
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) outArray.add('-');
-                        for(int cidx = 0; cidx < io_outs_count; cidx++) outArray.add('-');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) outArray.add('-');
-                        
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) {
-                            if(((oAOff >> cidx) & 0x01) != 0) outArray.add('1');
-                            else if(((oAOn >> cidx) & 0x01) != 0) outArray.add('0');
-                            else outArray.add('-');
-                        }
-                        for(int cidx = 0; cidx < io_outs_count; cidx++) {
-                            if(((ioAOff >> cidx) & 0x01) != 0) outArray.add('1');
-                            else if(((ioAOn >> cidx) & 0x01) != 0) outArray.add('0');
-                            else outArray.add('-');
-                        }
-
-                        if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
-                        else for(char out : outArray) strBuf.append(out);
-                        strBuf.append('\n');
-                        padding.add(strBuf.toString());
-                    }
-                }
-            }
-
-            if(pSpecs.getPinCount_RO() > 0) {
-                // Registered Outputs
-                padding.add("# Padding ROs START\n");
-                for(int idx = 0; idx < (1 << pSpecs.getPinCount_RO()); idx++) {
-                    if(!visitedROs.contains(idx)) {
-                        strBuf.delete(0, strBuf.length());
-                        
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_IN(); cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < io_ins_count; cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < io_fio_count; cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) strBuf.append((((idx >> cidx) & 0x01) != 0) ? '1' : '0');
-                        strBuf.append(' ');
-                        
-                        ArrayList<Character> outArray = new ArrayList<>();
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) outArray.add('-');
-                        for(int cidx = 0; cidx < io_outs_count; cidx++) outArray.add('-');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) outArray.add('-');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_O()+io_outs_count; cidx++) outArray.add('-');
-
-                        if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
-                        else for(char out : outArray) strBuf.append(out);
-                        strBuf.append('\n');
-                        padding.add(strBuf.toString());
-                    }
-                }
-            }
-
-            padding.add("# Padding END\n");
-        }
-
-        ArrayList<String> paddedTable = new ArrayList<>();
-        for(String p : padding) paddedTable.add(p);
-        paddedTable.addAll(tableRows);
-
-        return paddedTable.toArray(new String[paddedTable.size()]);
+        return tableRows.toArray(new String[tableRows.size()]);
     }
 
     public static String[] formatEspressoTable(PALSpecs pSpecs, SimpleState[] states) {

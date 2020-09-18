@@ -25,15 +25,13 @@ public class App {
 
     private static String inFile = null;
     private static String outFile = null;
-    private static boolean padTable = false;
-    private static boolean feedbackFlip = false;
 
     public static void main(String[] args) throws IOException {
         System.out.println("DuPAL Espresso Converter " + version);
 
         if (args.length < 2) {
             logger.error("Wrong number of arguments passed.\n"
-                    + "dupal_espressoconverter <input_file> <output_file> [padding Y|N] [feedback_flip Y|N]\n");
+                    + "dupal_espressoconverter <input_file> <output_file>\n");
 
             return;
         }
@@ -53,8 +51,8 @@ public class App {
             RLink[] rlArray = ContentParser.extractRLinks(root);
             OLink[] olArray = ContentParser.extractOLinks(root);
             
-            header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, -1);
-            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, padTable, -1);
+            header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, 15);
+            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, 15);
 
         } else {
             SimpleState[] ssArray = ContentParser.extractSimpleStates(root);
@@ -68,14 +66,6 @@ public class App {
     private static void parseArgs(String[] args) {
         inFile = args[0];
         outFile = args[1];
-
-        if(args.length >= 3) {
-            padTable = args[2].equalsIgnoreCase("Y");
-        }
-
-        if(args.length >= 4) {
-            feedbackFlip = args[3].equalsIgnoreCase("Y");
-        }
     }
 
     private static void saveTableToFile(String destination, String header, String[] rows, String footer) throws IOException {
