@@ -54,7 +54,7 @@ public class App {
             OLink[] olArray = ContentParser.extractOLinks(root);
             
             header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, -1);
-            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, padTable);
+            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, padTable, -1);
 
         } else {
             SimpleState[] ssArray = ContentParser.extractSimpleStates(root);

@@ -47,18 +47,22 @@ public class EspressoFormatter {
         strBuf.append("\n");
        
         strBuf.append(".phase ");
-        for(int idx = 0; idx < outCount; idx++) strBuf.append(pSpecs.isActiveLow() ? '0' : '1');
-        for(int idx = 0; idx < outCount_oe; idx++) strBuf.append('1');
+        ArrayList<Character> phaseLabels = new ArrayList<>();
+        for(int idx = 0; idx < outCount; idx++) phaseLabels.add(pSpecs.isActiveLow() ? '0' : '1');
+        for(int idx = 0; idx < outCount_oe; idx++) phaseLabels.add('1');
+
+        if(singleOutSelection >= 0) strBuf.append(phaseLabels.get(singleOutSelection));
+        else for(char phase : phaseLabels) strBuf.append(phase);
         strBuf.append("\n\n");
         
         return strBuf.toString();
     }
   
     public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks) {
-        return formatEspressoTable(pSpecs, ioAsOutMask, oLinks, rLinks, true);
+        return formatEspressoTable(pSpecs, ioAsOutMask, oLinks, rLinks, true, -1);
     }
     
-    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, boolean padTable) {
+    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, boolean padTable, int singleOutSelection) {
         int ioAsOut_W = BitUtils.scatterBitField(BitUtils.consolidateBitField(ioAsOutMask, pSpecs.getMask_IO_R()), pSpecs.getMask_IO_W());
         HashSet<String> tableRows = new HashSet<>();
 
@@ -107,20 +111,23 @@ public class EspressoFormatter {
             for(int idx = 0; idx < pSpecs.getPinCount_RO(); idx++) strBuf.append((char)(((ro_ps >> idx) & 0x01) + 0x30));
 
             strBuf.append(' ');
+            ArrayList<Character> outArray = new ArrayList<>();
             // Print the outputs
             for(int idx = 0; idx < pSpecs.getPinCount_O(); idx++) {
                 boolean out_pin_hiz = ((outs_hiz >> idx) & 0x01) != 0;
-                strBuf.append(out_pin_hiz ? '-' : (char)(((outs >> idx) & 0x01) + 0x30));
+                outArray.add(out_pin_hiz ? '-' : (char)(((outs >> idx) & 0x01) + 0x30));
             }
             for(int idx = 0; idx < io_outs_count; idx++) {
                 boolean io_pin_hiz = ((io_outs_hiz >> idx) & 0x01) != 0;
-                strBuf.append(io_pin_hiz ? '-' : (char)(((io_outs >> idx) & 0x01) + 0x30));
+                outArray.add(io_pin_hiz ? '-' : (char)(((io_outs >> idx) & 0x01) + 0x30));
             }
-            for(int idx = 0; idx < pSpecs.getPinCount_RO(); idx++) strBuf.append('-'); // Ignore the destination Registered Outputs for this type of link, as they can't change
+            for(int idx = 0; idx < pSpecs.getPinCount_RO(); idx++) outArray.add('-'); // Ignore the destination Registered Outputs for this type of link, as they can't change
             // Print the outputs (hiz flags)
-            for(int idx = 0; idx < pSpecs.getPinCount_O(); idx++) strBuf.append((char)(((outs_hiz >> idx) & 0x01) + 0x30));
-            for(int idx = 0; idx < io_outs_count; idx++) strBuf.append((char)(((io_outs_hiz >> idx) & 0x01) + 0x30));
+            for(int idx = 0; idx < pSpecs.getPinCount_O(); idx++) outArray.add((char)(((outs_hiz >> idx) & 0x01) + 0x30));
+            for(int idx = 0; idx < io_outs_count; idx++) outArray.add((char)(((io_outs_hiz >> idx) & 0x01) + 0x30));
 
+            if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
+            else for(char out : outArray) strBuf.append(out);
             strBuf.append('\n');
 
             tableRows.add(strBuf.toString());
@@ -156,14 +163,16 @@ public class EspressoFormatter {
             for(int idx = 0; idx < pSpecs.getPinCount_RO(); idx++) strBuf.append((char)(((ro_ps >> idx) & 0x01) + 0x30));
               
             strBuf.append(' ');
-
+            ArrayList<Character> outArray = new ArrayList<>();
             // Print the outputs
-            for(int idx = 0; idx < pSpecs.getPinCount_O(); idx++) strBuf.append('-');
-            for(int idx = 0; idx < io_outs_count; idx++) strBuf.append('-');
-            for(int idx = 0; idx < pSpecs.getPinCount_RO(); idx++) strBuf.append((char)(((ro >> idx) & 0x01) + 0x30));
+            for(int idx = 0; idx < pSpecs.getPinCount_O(); idx++) outArray.add('-');
+            for(int idx = 0; idx < io_outs_count; idx++) outArray.add('-');
+            for(int idx = 0; idx < pSpecs.getPinCount_RO(); idx++)outArray.add((char)(((ro >> idx) & 0x01) + 0x30));
             // Print the outputs (hiz flags)
-            for(int idx = 0; idx < pSpecs.getPinCount_O()+io_outs_count; idx++) strBuf.append('-');
-
+            for(int idx = 0; idx < pSpecs.getPinCount_O()+io_outs_count; idx++) outArray.add('-');
+            
+            if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
+            else for(char out : outArray) strBuf.append(out);
             strBuf.append('\n');
             tableRows.add(strBuf.toString());
         }
@@ -193,26 +202,32 @@ public class EspressoFormatter {
                     if(!visitedFIOs.contains(idx)) {
                         strBuf.delete(0, strBuf.length());
 
+                        // Inputs
                         for(int cidx = 0; cidx < pSpecs.getPinCount_IN(); cidx++) strBuf.append('-');
                         for(int cidx = 0; cidx < io_ins_count; cidx++) strBuf.append('-');
                         for(int cidx = 0; cidx < io_fio_count; cidx++) strBuf.append((((idx >> cidx) & 0x01) != 0) ? '1' : '0');
                         for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) strBuf.append('-');
                         strBuf.append(' ');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < io_outs_count; cidx++) strBuf.append('-');
-                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) strBuf.append('-');
+
+                        ArrayList<Character> outArray = new ArrayList<>();
+                        // Outputs
+                        for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) outArray.add('-');
+                        for(int cidx = 0; cidx < io_outs_count; cidx++) outArray.add('-');
+                        for(int cidx = 0; cidx < pSpecs.getPinCount_RO(); cidx++) outArray.add('-');
                         
                         for(int cidx = 0; cidx < pSpecs.getPinCount_O(); cidx++) {
-                            if(((oAOff >> cidx) & 0x01) != 0) strBuf.append('1');
-                            else if(((oAOn >> cidx) & 0x01) != 0) strBuf.append('0');
-                            else strBuf.append('-');
+                            if(((oAOff >> cidx) & 0x01) != 0) outArray.add('1');
+                            else if(((oAOn >> cidx) & 0x01) != 0) outArray.add('0');
+                            else outArray.add('-');
                         }
                         for(int cidx = 0; cidx < io_outs_count; cidx++) {
-                            if(((ioAOff >> cidx) & 0x01) != 0) strBuf.append('1');
-                            else if(((ioAOn >> cidx) & 0x01) != 0) strBuf.append('0');
-                            else strBuf.append('-');
+                            if(((ioAOff >> cidx) & 0x01) != 0) outArray.add('1');
+                            else if(((ioAOn >> cidx) & 0x01) != 0) outArray.add('0');
+                            else outArray.add('-');
                         }
 
+                        if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
+                        else for(char out : outArray) strBuf.append(out);
                         strBuf.append('\n');
                         padding.add(strBuf.toString());
                     }
