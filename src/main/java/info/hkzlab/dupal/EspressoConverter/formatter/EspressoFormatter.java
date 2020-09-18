@@ -148,8 +148,6 @@ public class EspressoFormatter {
             io_ins = BitUtils.consolidateBitField(rl.inputs, pSpecs.getMask_IO_W() & ~ioAsOut_W); // IOs as inputs
             io_fio = BitUtils.consolidateBitField(rl.middle.out, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks)
             io_fio_hiz = BitUtils.consolidateBitField(rl.middle.hiz, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks) - hiz flags
-            io_fio_dst = BitUtils.consolidateBitField(rl.dst.out, ioAsOutMask); // IO as outputs (feedbacks) coming from destination state
-            io_fio_hiz_dst = BitUtils.consolidateBitField(rl.dst.hiz, ioAsOutMask); // IO as outputs (feedbacks) coming from destination state - hiz flags
             ro_ps = BitUtils.consolidateBitField(rl.middle.out, pSpecs.getMask_RO_R()); // Old Registered Outputs
 
             visitedROs.add(ro_ps);
