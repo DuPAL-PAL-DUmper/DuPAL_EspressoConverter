@@ -25,13 +25,14 @@ public class App {
 
     private static String inFile = null;
     private static String outFile = null;
+    private static int outSel = -1;
 
     public static void main(String[] args) throws IOException {
         System.out.println("DuPAL Espresso Converter " + version);
 
         if (args.length < 2) {
             logger.error("Wrong number of arguments passed.\n"
-                    + "dupal_espressoconverter <input_file> <output_file>\n");
+                    + "dupal_espressoconverter <input_file> <output_file> [single output table]\n");
 
             return;
         }
@@ -42,6 +43,8 @@ public class App {
         PALSpecs pSpecs = ContentParser.getPALType(root);
         logger.info("Got file for PAL type " + pSpecs);
 
+        if(outSel >= 0) logger.info("Printing table only for output number " + outSel);
+
         String header = null;
         String[] table = null;
         String footer = EspressoFormatter.formatEspressoFooter();
@@ -51,12 +54,12 @@ public class App {
             RLink[] rlArray = ContentParser.extractRLinks(root);
             OLink[] olArray = ContentParser.extractOLinks(root);
             
-            header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, 15);
-            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, 15);
+            header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, outSel);
+            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, outSel);
 
         } else {
             SimpleState[] ssArray = ContentParser.extractSimpleStates(root);
-            header = EspressoFormatter.formatEspressoTableHeader(pSpecs, 0, -1);
+            header = EspressoFormatter.formatEspressoTableHeader(pSpecs, 0, outSel);
             table = EspressoFormatter.formatEspressoTable(pSpecs, ssArray);
         }
 
@@ -66,6 +69,10 @@ public class App {
     private static void parseArgs(String[] args) {
         inFile = args[0];
         outFile = args[1];
+
+        if(args.length >= 3) {
+            outSel = Integer.parseInt(args[2]);
+        }
     }
 
     private static void saveTableToFile(String destination, String header, String[] rows, String footer) throws IOException {

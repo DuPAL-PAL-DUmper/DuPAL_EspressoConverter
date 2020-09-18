@@ -49,7 +49,7 @@ public class EspressoFormatter {
         strBuf.append(".phase ");
         ArrayList<Character> phaseLabels = new ArrayList<>();
         for(int idx = 0; idx < outCount; idx++) phaseLabels.add(pSpecs.isActiveLow() ? '0' : '1');
-        for(int idx = 0; idx < outCount_oe; idx++) phaseLabels.add('1');
+        for(int idx = 0; idx < outCount_oe; idx++) phaseLabels.add('0');
 
         if(singleOutSelection >= 0) strBuf.append(phaseLabels.get(singleOutSelection));
         else for(char phase : phaseLabels) strBuf.append(phase);
