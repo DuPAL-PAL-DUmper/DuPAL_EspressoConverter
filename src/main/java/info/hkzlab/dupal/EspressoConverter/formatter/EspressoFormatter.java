@@ -2,7 +2,6 @@ package info.hkzlab.dupal.EspressoConverter.formatter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,10 +67,12 @@ public class EspressoFormatter {
     }
   
     public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks) {
-        return formatEspressoTable(pSpecs, ioAsOutMask, oLinks, rLinks, -1);
+        return formatEspressoTable(pSpecs, ioAsOutMask, oLinks, rLinks, -1, false);
     }
     
-    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, int singleOutSelection) {
+    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, int singleOutSelection, boolean useSourceFIOs) {
+        if(useSourceFIOs) logger.info("formatEspressoTable() -> Feedback IOs will be taken from the source state only!");
+
         int ioAsOut_W = BitUtils.scatterBitField(BitUtils.consolidateBitField(ioAsOutMask, pSpecs.getMask_IO_R()), pSpecs.getMask_IO_W());
         HashSet<String> tableRows = new HashSet<>();
 
@@ -81,9 +82,6 @@ public class EspressoFormatter {
         int io_outs_count = BitUtils.countBits(ioAsOutMask);
 
         StringBuffer strBuf = new StringBuffer();
-
-        Set<Integer> visitedFIOs = new HashSet<>();
-        Set<Integer> visitedROs = new HashSet<>();
 
         for(OLink ol : oLinks) {
             strBuf.delete(0, strBuf.length());
@@ -103,21 +101,12 @@ public class EspressoFormatter {
             io_outs_hiz = BitUtils.consolidateBitField(ol.dst.hiz, ioAsOutMask); // IO as outputs (feedbacks)
             ro = 0x00; // We'll set these as "don't care" for this type of link, as they can only be changed via a registered link
 
-            // Build all combinations of the feedback IOs to mark as already visited
-            if(io_fio_hiz != 0) {
-                int maxVal = 1 << BitUtils.countBits(io_fio_hiz);
-                for(int idx = 0; idx < maxVal; idx++) {
-                    int fio_comb = io_fio_dst | BitUtils.scatterBitField(idx, io_fio_hiz_dst);
-                    visitedFIOs.add(fio_comb);
-                }
-            } else visitedFIOs.add(io_fio);
-
             // Print the inputs
             int in_pin_cnt = 0 - pSpecs.getPinCount_IN() - io_ins_count;
             for(int idx = 0; idx < pSpecs.getPinCount_IN(); idx++, in_pin_cnt++) strBuf.append((char)(((ins >> idx) & 0x01) + 0x30));
             for(int idx = 0; idx < io_ins_count; idx++, in_pin_cnt++) strBuf.append((char)(((io_ins >> idx) & 0x01) + 0x30));
             for(int idx = 0; idx < io_fio_count; idx++, in_pin_cnt++) {
-                if((in_pin_cnt == singleOutSelection) || (singleOutSelection < 0)) {
+                if(useSourceFIOs || (in_pin_cnt == singleOutSelection) || (singleOutSelection < 0)) {
                     boolean fio_pin_hiz = ((io_fio_hiz >> idx) & 0x01) != 0;
                     strBuf.append(fio_pin_hiz ? '-' : (char)(((io_fio >> idx) & 0x01) + 0x30));
                 } else {
@@ -158,8 +147,6 @@ public class EspressoFormatter {
             io_fio = BitUtils.consolidateBitField(rl.middle.out, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks)
             io_fio_hiz = BitUtils.consolidateBitField(rl.middle.hiz, pSpecs.getMask_IO_R() & ioAsOutMask); // IO as outputs (feedbacks) - hiz flags
             ro_ps = BitUtils.consolidateBitField(rl.middle.out, pSpecs.getMask_RO_R()); // Old Registered Outputs
-
-            visitedROs.add(ro_ps);
 
             outs = 0x00; // Outputs, Ignore, we'll set them as don't care for this type of link, these will be set by outlinks
             outs_hiz = 0x00;

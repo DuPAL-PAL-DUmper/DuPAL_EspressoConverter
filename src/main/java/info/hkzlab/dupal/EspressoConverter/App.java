@@ -26,13 +26,14 @@ public class App {
     private static String inFile = null;
     private static String outFile = null;
     private static int outSel = -1;
+    private static boolean useSourceFIOs = false;
 
     public static void main(String[] args) throws IOException {
         System.out.println("DuPAL Espresso Converter " + version);
 
         if (args.length < 2) {
             logger.error("Wrong number of arguments passed.\n"
-                    + "dupal_espressoconverter <input_file> <output_file> [single output table]\n");
+                    + "dupal_espressoconverter <input_file> <output_file> [single output table] [use only source FIOs Y|N]\n");
 
             return;
         }
@@ -55,7 +56,7 @@ public class App {
             OLink[] olArray = ContentParser.extractOLinks(root);
             
             header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, outSel);
-            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, outSel);
+            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, outSel, useSourceFIOs);
 
         } else {
             SimpleState[] ssArray = ContentParser.extractSimpleStates(root);
@@ -72,6 +73,10 @@ public class App {
 
         if(args.length >= 3) {
             outSel = Integer.parseInt(args[2]);
+        }
+
+        if(args.length >= 4) {
+            useSourceFIOs = args[3].equalsIgnoreCase("Y");
         }
     }
 
