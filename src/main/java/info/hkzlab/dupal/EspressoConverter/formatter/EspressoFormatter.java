@@ -1,6 +1,7 @@
 package info.hkzlab.dupal.EspressoConverter.formatter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 
 import org.slf4j.Logger;
@@ -180,7 +181,10 @@ public class EspressoFormatter {
             tableRows.add(strBuf.toString());
         }
 
-        return tableRows.toArray(new String[tableRows.size()]);
+        String[] outRows = tableRows.toArray(new String[tableRows.size()]);
+        Arrays.sort(outRows);
+
+        return outRows;
     }
 
     public static String[] formatEspressoTable(PALSpecs pSpecs, SimpleState[] states) {
