@@ -70,4 +70,76 @@ public class EspressoFormatterTest
 
         assertArrayEquals("EspressoFormatter should build the correct truth table for specified states", expected, rows);	
     }
+
+    @Test
+    public void espressoFormatterShouldBuildCorrect16L8TableWithSingleOutput() {
+        PAL16L8Specs pSpecs = new PAL16L8Specs();	
+        int ioAsOutMask = 0x38;	
+
+        OLink[] oLinks = new OLink[9];
+
+        oLinks[0] = new OLink(0x1FFF, new OutStatePins(0x00, 0xC0), new OutStatePins(0x38, 0xC0));
+        oLinks[1] = new OLink(0x1F3F, new OutStatePins(0x00, 0xC0), new OutStatePins(0xB0, 0x00));
+        oLinks[2] = new OLink(0x0000, new OutStatePins(0x00, 0xC0), new OutStatePins(0x28, 0x40));
+
+        oLinks[3] = new OLink(0x1FFF, new OutStatePins(0x38, 0xC0), new OutStatePins(0x28, 0x40));
+        oLinks[4] = new OLink(0x1F3F, new OutStatePins(0x38, 0xC0), new OutStatePins(0x00, 0xC0));
+        oLinks[5] = new OLink(0x0000, new OutStatePins(0x38, 0xC0), new OutStatePins(0xB0, 0x00));
+        
+        oLinks[6] = new OLink(0x1FFF, new OutStatePins(0xB0, 0x00), new OutStatePins(0x00, 0xC0));
+        oLinks[7] = new OLink(0x1F3F, new OutStatePins(0xB0, 0x00), new OutStatePins(0x38, 0xC0));
+        oLinks[8] = new OLink(0x0000, new OutStatePins(0xB0, 0x00), new OutStatePins(0x38, 0xC0));
+        
+        String[] rows = EspressoFormatter.formatEspressoTable(pSpecs, ioAsOutMask, oLinks, new RLink[0], 1, false);
+
+        String[] expected = new String[] {	
+            "0000000000000011 1\n",
+            "0000000000000101 0\n",
+            "0000000000000111 -\n",
+            "1111110011111001 1\n",
+            "1111110011111010 -\n",
+            "1111110011111111 -\n",
+            "1111111111111010 -\n",
+            "1111111111111101 -\n",
+            "1111111111111111 0\n"
+        };	
+
+        assertArrayEquals("EspressoFormatter should build the correct truth table for specified states when a single output is selected", expected, rows);	
+    }
+
+    @Test
+    public void espressoFormatterShouldBuildCorrect16L8TableWithSingleOutputAndSourceFIOs() {
+        PAL16L8Specs pSpecs = new PAL16L8Specs();	
+        int ioAsOutMask = 0x38;	
+
+        OLink[] oLinks = new OLink[9];
+
+        oLinks[0] = new OLink(0x1FFF, new OutStatePins(0x00, 0xC0), new OutStatePins(0x38, 0xC0));
+        oLinks[1] = new OLink(0x1F3F, new OutStatePins(0x00, 0xC0), new OutStatePins(0xB0, 0x00));
+        oLinks[2] = new OLink(0x0000, new OutStatePins(0x00, 0xC0), new OutStatePins(0x28, 0x40));
+
+        oLinks[3] = new OLink(0x1FFF, new OutStatePins(0x38, 0xC0), new OutStatePins(0x28, 0x40));
+        oLinks[4] = new OLink(0x1F3F, new OutStatePins(0x38, 0xC0), new OutStatePins(0x00, 0xC0));
+        oLinks[5] = new OLink(0x0000, new OutStatePins(0x38, 0xC0), new OutStatePins(0xB0, 0x00));
+        
+        oLinks[6] = new OLink(0x1FFF, new OutStatePins(0xB0, 0x00), new OutStatePins(0x00, 0xC0));
+        oLinks[7] = new OLink(0x1F3F, new OutStatePins(0xB0, 0x00), new OutStatePins(0x38, 0xC0));
+        oLinks[8] = new OLink(0x0000, new OutStatePins(0xB0, 0x00), new OutStatePins(0x38, 0xC0));
+        
+        String[] rows = EspressoFormatter.formatEspressoTable(pSpecs, ioAsOutMask, oLinks, new RLink[0], 1, true);
+
+        String[] expected = new String[] {	
+            "0000000000000000 0\n",
+            "0000000000000011 -\n",
+            "0000000000000111 1\n",
+            "1111110011111000 1\n",
+            "1111110011111011 -\n",
+            "1111110011111111 -\n",
+            "1111111111111000 -\n",
+            "1111111111111011 -\n",
+            "1111111111111111 0\n"
+        };	
+
+        assertArrayEquals("EspressoFormatter should build the correct truth table for specified states when a single output and source FIOs are selected", expected, rows);	
+    }
 }
