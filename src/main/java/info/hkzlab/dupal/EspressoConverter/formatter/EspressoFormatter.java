@@ -17,7 +17,7 @@ public class EspressoFormatter {
     private EspressoFormatter() {};
 
     public static String formatEspressoTableHeader(PALSpecs pSpecs, int ioAsOutMask, int singleOutSelection) {
-        logger.info("formatEspressoTableHeader() -> Will format a table for a " + pSpecs + " with IO mask %02X" + (singleOutSelection >= 0 ? " - Will print only output " + singleOutSelection : ""), ioAsOutMask);
+        logger.info("formatEspressoTableHeader() -> Will format a table for a " + pSpecs + " with IO mask " + String.format("%02X", ioAsOutMask) + (singleOutSelection >= 0 ? " - Will print only output " + singleOutSelection : ""));
 
         StringBuffer strBuf = new StringBuffer();
         int ioAsOut_W = BitUtils.scatterBitField(BitUtils.consolidateBitField(ioAsOutMask, pSpecs.getMask_IO_R()), pSpecs.getMask_IO_W());
