@@ -15,6 +15,8 @@ public class ContentParser {
         String palName = root.getJSONObject("header").getJSONObject("PAL").getString("type");
 
         switch(palName.toUpperCase()) {
+            case "PAL16R8":
+                return new PAL16R8Specs();
             case "PAL16L8":
                 return new PAL16L8Specs();
             case "PAL10L8":
