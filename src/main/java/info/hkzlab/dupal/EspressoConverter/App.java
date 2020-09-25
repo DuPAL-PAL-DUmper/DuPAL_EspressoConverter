@@ -88,9 +88,14 @@ public class App {
 
         for(String[] table : tables) {
             if(table != null && table.length > 0) {
-                logger.info("saveOutputToFile() -> Saving to " + destination+"."+file_counter);
+                if(tables.length > 1) {
+                    logger.info("saveOutputToFile() -> Saving to " + destination+".tab"+file_counter);
+                    fout = new FileOutputStream(destination+"."+file_counter);
+                } else {
+                    logger.info("saveOutputToFile() -> Saving to " + destination);
+                    fout = new FileOutputStream(destination);
+                }
 
-                fout = new FileOutputStream(destination+"."+file_counter);
                 fout.write(header.getBytes(StandardCharsets.US_ASCII));
                 for(String row : table) fout.write(row.getBytes(StandardCharsets.US_ASCII));  
                 fout.write(footer.getBytes(StandardCharsets.US_ASCII));
