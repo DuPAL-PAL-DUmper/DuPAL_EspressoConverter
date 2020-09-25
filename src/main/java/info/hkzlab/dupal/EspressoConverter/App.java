@@ -4,7 +4,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -16,10 +15,6 @@ import info.hkzlab.dupal.EspressoConverter.formatter.EspressoFormatter;
 import info.hkzlab.dupal.EspressoConverter.parser.ContentParser;
 import info.hkzlab.dupal.EspressoConverter.states.*;
 
-/**
- * Hello world!
- *
- */
 public class App {
     private final static Logger logger = LoggerFactory.getLogger(App.class);
     private final static String version = App.class.getPackage().getImplementationVersion();
