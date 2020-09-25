@@ -67,15 +67,16 @@ public class EspressoFormatter {
         return strBuf.toString();
     }
   
-    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks) {
+    public static String[][] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks) {
         return formatEspressoTable(pSpecs, ioAsOutMask, oLinks, rLinks, -1, false);
     }
     
-    public static String[] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, int singleOutSelection, boolean useSourceFIOs) {
+    public static String[][] formatEspressoTable(PALSpecs pSpecs, int ioAsOutMask, OLink[] oLinks, RLink[] rLinks, int singleOutSelection, boolean useSourceFIOs) {
         if(useSourceFIOs) logger.info("formatEspressoTable() -> Feedback IOs will be taken from the source state only!");
 
         int ioAsOut_W = BitUtils.scatterBitField(BitUtils.consolidateBitField(ioAsOutMask, pSpecs.getMask_IO_R()), pSpecs.getMask_IO_W());
-        HashSet<String> tableRows = new HashSet<>();
+        HashSet<String> olTableRows = new HashSet<>();
+        HashSet<String> rlTableRows = new HashSet<>();
 
         int ins, io_ins, io_fio, io_fio_hiz, io_fio_dst, io_fio_hiz_dst, ro_ps, outs, outs_hiz, io_outs, io_outs_hiz, ro;
         int io_ins_count = BitUtils.countBits(pSpecs.getMask_IO_W() & ~ioAsOut_W);
@@ -137,7 +138,7 @@ public class EspressoFormatter {
             else for(char out : outArray) strBuf.append(out);
             strBuf.append('\n');
 
-            tableRows.add(strBuf.toString());
+            olTableRows.add(strBuf.toString());
         }
 
         for(RLink rl : rLinks) {
@@ -178,16 +179,19 @@ public class EspressoFormatter {
             if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
             else for(char out : outArray) strBuf.append(out);
             strBuf.append('\n');
-            tableRows.add(strBuf.toString());
+            rlTableRows.add(strBuf.toString());
         }
 
-        String[] outRows = tableRows.toArray(new String[tableRows.size()]);
-        Arrays.sort(outRows);
+        String[] olTableArray = olTableRows.toArray(new String[olTableRows.size()]);
+        String[] rlTableArray = rlTableRows.toArray(new String[rlTableRows.size()]);
 
-        return outRows;
+        Arrays.sort(olTableArray);
+        Arrays.sort(rlTableArray);
+
+        return new String[][] { olTableArray, rlTableArray };
     }
 
-    public static String[] formatEspressoTable(PALSpecs pSpecs, SimpleState[] states) {
+    public static String[][] formatEspressoTable(PALSpecs pSpecs, SimpleState[] states) {
         ArrayList<String> tableRows = new ArrayList<>();
 
         StringBuffer strBuf = new StringBuffer();
@@ -209,7 +213,10 @@ public class EspressoFormatter {
             tableRows.add(strBuf.toString());
         }
 
-        return tableRows.toArray(new String[tableRows.size()]);
+        String[] tableRowsArray = tableRows.toArray(new String[tableRows.size()]);
+        Arrays.sort(tableRowsArray);
+
+        return new String[][] { tableRowsArray };
     }
 
     public static String formatEspressoFooter() {

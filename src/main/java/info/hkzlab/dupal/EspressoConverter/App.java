@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -53,7 +54,7 @@ public class App {
         if(outSel >= 0) logger.info("Printing table only for output number " + outSel);
 
         String header = null;
-        String[] table = null;
+        String[][] tables = null;
         String footer = EspressoFormatter.formatEspressoFooter();
 
         if(pSpecs.getPinCount_IO() > 0 || pSpecs.getPinCount_RO() > 0) {
@@ -62,15 +63,15 @@ public class App {
             OLink[] olArray = ContentParser.extractOLinks(root);
             
             header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, outSel);
-            table = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, outSel, useSourceFIOs);
+            tables = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, outSel, useSourceFIOs);
 
         } else {
             SimpleState[] ssArray = ContentParser.extractSimpleStates(root);
             header = EspressoFormatter.formatEspressoTableHeader(pSpecs, 0, outSel);
-            table = EspressoFormatter.formatEspressoTable(pSpecs, ssArray);
+            tables = EspressoFormatter.formatEspressoTable(pSpecs, ssArray);
         }
 
-        saveTableToFile(outFile, header, table, footer);
+        saveTableToFile(outFile, header, tables, footer);
     }
 
     private static void parseArgs(String[] args) {
@@ -86,7 +87,7 @@ public class App {
         }
     }
 
-    private static void saveTableToFile(String destination, String header, String[] rows, String footer) throws IOException {
+    private static void saveTableToFile(String destination, String header, String[][] tables, String footer) throws IOException {
         FileOutputStream fout = null;
         
         logger.info("saveOutputToFile() -> Saving to " + destination);
@@ -95,8 +96,12 @@ public class App {
             fout = new FileOutputStream(outFile);
 
             fout.write(header.getBytes(StandardCharsets.US_ASCII));
-            for(String row : rows) fout.write(row.getBytes(StandardCharsets.US_ASCII));
-            fout.write(footer.getBytes(StandardCharsets.US_ASCII));
+            for(String[] table : tables) {
+                if(table != null && table.length > 0) {
+                   for(String row : table) fout.write(row.getBytes(StandardCharsets.US_ASCII));  
+                   fout.write(footer.getBytes(StandardCharsets.US_ASCII));
+                }
+            } 
             
             fout.flush();
             fout.close();
