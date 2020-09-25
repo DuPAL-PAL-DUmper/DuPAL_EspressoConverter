@@ -89,25 +89,22 @@ public class App {
 
     private static void saveTableToFile(String destination, String header, String[][] tables, String footer) throws IOException {
         FileOutputStream fout = null;
-        
-        logger.info("saveOutputToFile() -> Saving to " + destination);
+        int file_counter = 0;        
 
-        try {
-            fout = new FileOutputStream(outFile);
+        for(String[] table : tables) {
+            if(table != null && table.length > 0) {
+                logger.info("saveOutputToFile() -> Saving to " + destination+"."+file_counter);
 
-            fout.write(header.getBytes(StandardCharsets.US_ASCII));
-            for(String[] table : tables) {
-                if(table != null && table.length > 0) {
-                   for(String row : table) fout.write(row.getBytes(StandardCharsets.US_ASCII));  
-                   fout.write(footer.getBytes(StandardCharsets.US_ASCII));
-                }
-            } 
-            
-            fout.flush();
-            fout.close();
-        } catch(IOException e) {
-            logger.error("Error printing out the registered outputs table (not including outputs).");
-            throw e;
+                fout = new FileOutputStream(destination+"."+file_counter);
+                fout.write(header.getBytes(StandardCharsets.US_ASCII));
+                for(String row : table) fout.write(row.getBytes(StandardCharsets.US_ASCII));  
+                fout.write(footer.getBytes(StandardCharsets.US_ASCII));
+                
+                fout.flush();
+                fout.close();
+
+                file_counter++;
+            }
         }
     }
 }
