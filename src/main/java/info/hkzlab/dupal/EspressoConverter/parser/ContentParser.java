@@ -1,5 +1,6 @@
 package info.hkzlab.dupal.EspressoConverter.parser;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
@@ -9,21 +10,23 @@ import info.hkzlab.dupal.EspressoConverter.devices.*;
 import info.hkzlab.dupal.EspressoConverter.states.*;
 
 public class ContentParser {
-    private ContentParser() {};
+    private ContentParser() {
+    };
 
     public static PALSpecs getPALType(JSONObject root) {
         String palName = root.getJSONObject("header").getJSONObject("PAL").getString("type");
+        PALSpecs pspecs = null;
 
-        switch(palName.toUpperCase()) {
-            case "PAL16R8":
-                return new PAL16R8Specs();
-            case "PAL16L8":
-                return new PAL16L8Specs();
-            case "PAL10L8":
-                return new PAL10L8Specs();
-            default:
-                return null;
+        Class<?> specsClass;
+        try {
+            specsClass = Class.forName("info.hkzlab.dupal.analyzer.devices.PAL" + palName.toUpperCase() + "Specs");
+            pspecs = (PALSpecs) specsClass.getConstructor().newInstance(new Object[] {});
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+            pspecs = null;
         }
+
+        return pspecs;
     }
     
     public static int extractIOasOutMask(JSONObject root) {
