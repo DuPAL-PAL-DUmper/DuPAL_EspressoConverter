@@ -42,6 +42,12 @@ public class App {
 
         JSONObject root = new JSONObject(new JSONTokener(new FileReader(inFile)));
         PALSpecs pSpecs = ContentParser.getPALType(root);
+
+        if(pSpecs == null) {
+            logger.error("Unknown PAL type for file.");
+            return;
+        }
+        
         logger.info("Got file for PAL type " + pSpecs);
 
         if(outSel >= 0) logger.info("Printing table only for output number " + outSel);
