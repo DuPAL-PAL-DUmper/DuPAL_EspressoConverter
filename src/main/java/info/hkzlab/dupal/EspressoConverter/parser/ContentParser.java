@@ -19,7 +19,7 @@ public class ContentParser {
 
         Class<?> specsClass;
         try {
-            specsClass = Class.forName("info.hkzlab.dupal.analyzer.devices.PAL" + palName.toUpperCase() + "Specs");
+            specsClass = Class.forName("info.hkzlab.dupal.EspressoConverter.devices." + palName.toUpperCase() + "Specs");
             pspecs = (PALSpecs) specsClass.getConstructor().newInstance(new Object[] {});
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException | SecurityException e) {
