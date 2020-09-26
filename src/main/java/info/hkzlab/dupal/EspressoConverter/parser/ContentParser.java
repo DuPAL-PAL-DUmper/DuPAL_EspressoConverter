@@ -2,6 +2,8 @@ package info.hkzlab.dupal.EspressoConverter.parser;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -43,7 +45,7 @@ public class ContentParser {
 
         for(int idx = 0; idx < ssArray.length(); idx++) {
             JSONObject ss = ssArray.getJSONObject(idx);
-            ssList.add(new SimpleState(ss.getInt("inputs"), ss.getInt("outputs"), ss.getInt("hiz")));
+            ssList.add(new SimpleState(ss.getInt("in"), ss.getInt("out"), ss.getInt("hiz")));
         }
 
         return ssList.toArray(new SimpleState[ssList.size()]);
@@ -52,13 +54,21 @@ public class ContentParser {
     public static OLink[] extractOLinks(JSONObject root) {
         ArrayList<OLink> olList = new ArrayList<>();
 
+        if(!root.has("states")) return null;
         if(!root.has("oLinks")) return null;
         JSONArray olArray = root.getJSONArray("oLinks");
+        JSONArray states = root.getJSONArray("states");
+
+        Map<Integer, OutStatePins> stateMap = new HashMap<>();
+        for(int idx = 0; idx < states.length(); idx++) {
+            JSONObject jstate = states.getJSONObject(idx);
+            stateMap.put(Integer.valueOf(jstate.getInt("hash")), new OutStatePins(jstate.getInt("out"), jstate.getInt("hiz")));
+        }
 
         for(int idx = 0; idx < olArray.length(); idx++) {
             JSONObject ol = olArray.getJSONObject(idx);
-            OutStatePins src = new OutStatePins(ol.getJSONObject("source").getInt("outputs"), ol.getJSONObject("source").getInt("hiz"));
-            OutStatePins dst = new OutStatePins(ol.getJSONObject("destination").getInt("outputs"), ol.getJSONObject("destination").getInt("hiz"));
+            OutStatePins src = stateMap.get(Integer.valueOf(ol.getInt("src")));
+            OutStatePins dst = stateMap.get(Integer.valueOf(ol.getInt("dst")));
 
             olList.add(new OLink(ol.getInt("inputs"), src, dst));
         }
@@ -70,13 +80,21 @@ public class ContentParser {
         ArrayList<RLink> rlList = new ArrayList<>();
 
         if(!root.has("rLinks")) return null;
+        if(!root.has("states")) return null;
+        JSONArray states = root.getJSONArray("states");
         JSONArray rlArray = root.getJSONArray("rLinks");
+
+        Map<Integer, OutStatePins> stateMap = new HashMap<>();
+        for(int idx = 0; idx < states.length(); idx++) {
+            JSONObject jstate = states.getJSONObject(idx);
+            stateMap.put(Integer.valueOf(jstate.getInt("hash")), new OutStatePins(jstate.getInt("out"), jstate.getInt("hiz")));
+        }
 
         for(int idx = 0; idx < rlArray.length(); idx++) {
             JSONObject rl = rlArray.getJSONObject(idx);
-            OutStatePins src = new OutStatePins(rl.getJSONObject("source").getInt("outputs"), rl.getJSONObject("source").getInt("hiz"));
-            OutStatePins mid = new OutStatePins(rl.getJSONObject("middle").getInt("outputs"), rl.getJSONObject("middle").getInt("hiz"));
-            OutStatePins dst = new OutStatePins(rl.getJSONObject("destination").getInt("outputs"), rl.getJSONObject("source").getInt("hiz"));
+            OutStatePins src = stateMap.get(Integer.valueOf(rl.getInt("src")));
+            OutStatePins mid = stateMap.get(Integer.valueOf(rl.getInt("mid")));
+            OutStatePins dst = stateMap.get(Integer.valueOf(rl.getInt("dst")));
 
             rlList.add(new RLink(rl.getInt("inputs"), src, mid, dst));
         }
