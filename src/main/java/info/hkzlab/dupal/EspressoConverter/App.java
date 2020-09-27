@@ -90,7 +90,7 @@ public class App {
             if(table != null && table.length > 0) {
                 if(tables.length > 1) {
                     logger.info("saveOutputToFile() -> Saving to " + destination+".tab"+file_counter);
-                    fout = new FileOutputStream(destination+"."+file_counter);
+                    fout = new FileOutputStream(destination+".tab"+file_counter);
                 } else {
                     logger.info("saveOutputToFile() -> Saving to " + destination);
                     fout = new FileOutputStream(destination);
