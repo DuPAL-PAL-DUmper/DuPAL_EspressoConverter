@@ -28,10 +28,11 @@ public class EspressoFormatter {
         int outCount_oe = pSpecs.getPinCount_O() + io_outCount;
         int inCount = pSpecs.getPinCount_IN() + io_inCount + io_outCount + pSpecs.getPinCount_RO();
 
-        logger.info("formatEspressoTableHeader() -> The complete table would have " + (outCount + outCount_oe) + " outputs!");
+        logger.debug("formatEspressoTableHeader() -> The complete table would have " + (outCount + outCount_oe) + " outputs!");
 
         strBuf.append("# " + pSpecs.toString() + "\n");
         strBuf.append(".i " + inCount + "\n"); // Inputs, IO as inputs, IO as outputs (as feedbacks), registered outputs (as feedbacks)
+        
         if(singleOutSelection >= 0) strBuf.append(".o 1\n");
         else strBuf.append(".o " + (outCount_oe + outCount) + "\n"); // Outputs, IO as outputs, Registered Outputs, then an out for all of those as OE
         
@@ -179,6 +180,7 @@ public class EspressoFormatter {
             if(singleOutSelection >= 0) strBuf.append(outArray.get(singleOutSelection));
             else for(char out : outArray) strBuf.append(out);
             strBuf.append('\n');
+            
             rlTableRows.add(strBuf.toString());
         }
 
@@ -188,7 +190,12 @@ public class EspressoFormatter {
         Arrays.sort(olTableArray);
         Arrays.sort(rlTableArray);
 
-        return new String[][] { olTableArray, rlTableArray };
+        ArrayList<String[]> tabArray = new ArrayList<>();
+
+        if(olTableArray != null && olTableArray.length > 0) tabArray.add(olTableArray);
+        if(rlTableArray != null && rlTableArray.length > 0) tabArray.add(rlTableArray);
+
+        return tabArray.toArray(new String[tabArray.size()][]);
     }
 
     public static String[][] formatEspressoTable(PALSpecs pSpecs, SimpleState[] states) {

@@ -4,7 +4,9 @@
 
 The **DuPAL Analyzer** tool generates a JSON output representing the raw state changes registered during the analisys.
 
-While that format contains the most information, it must be converted before tools like the `espresso` minimizer tool can be used to extract the logic equations from it. This tool is meant to convert the JSON file into one (or more, depending on the options passed) truth tables that can be minimized.
+While that format contains the most information, it must be converted before tools like the `espresso` minimizer tool can be used to extract the logic equations from it. This tool is meant to convert the JSON file into one (or more, depending on the type of PAL) truth tables that can be minimized.
+
+In case the PAL has both normal and registered outputs, **two truth tables will be generated**: one with states for the normal outputs and the other for the registered outputs.
 
 ## Command line options
 
@@ -15,8 +17,8 @@ java -jar espresso_converter.jar <input_file> <output_file> [single output table
 ``` 
 
 - **input_file**: *mandatory parameter*, path to the input JSON file
-- **output_file**: *mandatory parameter*, path to the output table generated from the JSON file
-- **single output table**: optional numeric parameter, range 0-X, where X is the total number of output functions for this PAL minus 1. If this is enabled, the destination file will contain a truth table with only the selected output.
+- **output_file**: *mandatory parameter*, path to the output table generated from the JSON file. In case the tool needs to generate multiple tables, it will do so by appending a suffix to the output file name.
+- **single output table**: optional numeric parameter, range 0-X, where X is the total number of output functions for this PAL minus 1. If this is enabled, the tool will generate the table for the selected output only.
 - **use only source FIOs**: optional boolean parameter, either **Y** or **N**. If enabled, the output table will use only the values from the starting state as feedbacks for the output. See below.
 
 ### Asynchronous feedbacks
@@ -32,8 +34,6 @@ In this case, when generating a truth table, the input that define such outputs 
 - The output (feedback) value itself from the starting state
 - The feedbacks from the destination state
 - The inputs fed into the equation
-
-As the table would be different for each output, we can enable this only when generating a single-output table.
 
 ## Requirements
 

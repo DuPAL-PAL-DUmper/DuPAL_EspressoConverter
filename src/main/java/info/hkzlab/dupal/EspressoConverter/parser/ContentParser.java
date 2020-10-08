@@ -15,8 +15,12 @@ public class ContentParser {
     private ContentParser() {
     };
 
+    public static String extractPALName(JSONObject root) {
+        return root.getJSONObject("header").getJSONObject("PAL").getString("type");
+    }
+
     public static PALSpecs getPALType(JSONObject root) {
-        String palName = root.getJSONObject("header").getJSONObject("PAL").getString("type");
+        String palName = extractPALName(root);
         PALSpecs pspecs = null;
 
         Class<?> specsClass;

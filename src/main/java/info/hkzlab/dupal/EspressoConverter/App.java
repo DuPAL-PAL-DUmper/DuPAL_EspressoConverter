@@ -1,5 +1,6 @@
 package info.hkzlab.dupal.EspressoConverter;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,12 +41,11 @@ public class App {
         PALSpecs pSpecs = ContentParser.getPALType(root);
 
         if(pSpecs == null) {
-            logger.error("Unknown PAL type for file.");
+            logger.error("Unknown PAL type ("+ContentParser.extractPALName(root)+") in input file!");
             return;
         }
         
         logger.info("Got file for PAL type " + pSpecs);
-
         if(outSel >= 0) logger.info("Printing table only for output number " + outSel);
 
         String header = null;
@@ -59,9 +59,9 @@ public class App {
             
             header = EspressoFormatter.formatEspressoTableHeader(pSpecs, IOsAsOUTs, outSel);
             tables = EspressoFormatter.formatEspressoTable(pSpecs, IOsAsOUTs, olArray, rlArray, outSel, useSourceFIOs);
-
         } else {
             SimpleState[] ssArray = ContentParser.extractSimpleStates(root);
+
             header = EspressoFormatter.formatEspressoTableHeader(pSpecs, 0, outSel);
             tables = EspressoFormatter.formatEspressoTable(pSpecs, ssArray);
         }
@@ -88,13 +88,13 @@ public class App {
 
         for(String[] table : tables) {
             if(table != null && table.length > 0) {
-                if(tables.length > 1) {
-                    logger.info("saveOutputToFile() -> Saving to " + destination+".tab"+file_counter);
-                    fout = new FileOutputStream(destination+".tab"+file_counter);
-                } else {
-                    logger.info("saveOutputToFile() -> Saving to " + destination);
-                    fout = new FileOutputStream(destination);
-                }
+                String filePath;
+                if(tables.length > 1) filePath =  destination+".tbl"+file_counter;
+                else filePath = destination;
+
+                checkOutPath(filePath);
+                logger.info("saveOutputToFile() -> Saving to " + filePath);
+                fout = new FileOutputStream(filePath);
 
                 fout.write(header.getBytes(StandardCharsets.US_ASCII));
                 for(String row : table) fout.write(row.getBytes(StandardCharsets.US_ASCII));  
@@ -105,6 +105,23 @@ public class App {
 
                 file_counter++;
             }
+        }
+    }
+
+    private static void checkOutPath(String path) {
+        File file = new File(path);
+
+        boolean exists = file.exists();
+        boolean isDirectory = file.isDirectory();
+
+        if(isDirectory) {
+            logger.error("Output path " + path + " points to a directory, please specify an output file!");
+            System.exit(-1);
+        }
+
+        if(exists) {
+            logger.error("Output path " + path + " points to an existing file. We're not going to overwrite it!");
+            System.exit(-1);
         }
     }
 }
