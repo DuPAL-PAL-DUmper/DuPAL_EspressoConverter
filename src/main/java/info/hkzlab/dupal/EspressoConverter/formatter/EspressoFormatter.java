@@ -17,8 +17,6 @@ public class EspressoFormatter {
     private EspressoFormatter() {};
 
     public static String formatEspressoTableHeader(PALSpecs pSpecs, int ioAsOutMask, int singleOutSelection) {
-        logger.info("formatEspressoTableHeader() -> Will format a table for a " + pSpecs + " with IO mask " + String.format("%02X", ioAsOutMask) + (singleOutSelection >= 0 ? " - Will print only output " + singleOutSelection : ""));
-
         StringBuffer strBuf = new StringBuffer();
         int ioAsOut_W = BitUtils.scatterBitField(BitUtils.consolidateBitField(ioAsOutMask, pSpecs.getMask_IO_R()), pSpecs.getMask_IO_W());
         int io_outCount = BitUtils.countBits(ioAsOutMask);
@@ -27,8 +25,6 @@ public class EspressoFormatter {
         int outCount = pSpecs.getPinCount_O() + io_outCount + pSpecs.getPinCount_RO();
         int outCount_oe = pSpecs.getPinCount_O() + io_outCount;
         int inCount = pSpecs.getPinCount_IN() + io_inCount + io_outCount + pSpecs.getPinCount_RO();
-
-        logger.debug("formatEspressoTableHeader() -> The complete table would have " + (outCount + outCount_oe) + " outputs!");
 
         strBuf.append("# " + pSpecs.toString() + "\n");
         strBuf.append(".i " + inCount + "\n"); // Inputs, IO as inputs, IO as outputs (as feedbacks), registered outputs (as feedbacks)
@@ -64,6 +60,8 @@ public class EspressoFormatter {
         if(singleOutSelection >= 0) strBuf.append(phaseLabels.get(singleOutSelection));
         else for(char phase : phaseLabels) strBuf.append(phase);
         strBuf.append("\n\n");
+        
+        logger.info("formatEspressoTableHeader() -> Will format a table for a " + pSpecs + ", IO mask " + String.format("%02X", ioAsOutMask) + (singleOutSelection >= 0 ? " - Will print only output " + obLabels.get(singleOutSelection) + "out of " + (outCount + outCount_oe) : ""));
         
         return strBuf.toString();
     }
