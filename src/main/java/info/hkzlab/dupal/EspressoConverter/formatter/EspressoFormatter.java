@@ -109,7 +109,6 @@ public class EspressoFormatter {
             // In case the selected single output to print corresponds to a feedback io, calculate which one we need to fetch from the source state
             if(singleOutSelection >= pSpecs.getPinCount_O()) {
                 singleOutSelectionInput = pSpecs.getPinCount_IN() + (pSpecs.getPinCount_IO() - BitUtils.countBits(ioAsOutMask)) + (singleOutSelection - pSpecs.getPinCount_O());
-                System.out.println("singleOutSelectionInput " + singleOutSelectionInput);
             }
 
             for(int idx = 0; idx < pSpecs.getPinCount_IN(); idx++, in_pin_cnt++) strBuf.append((char)(((ins >> idx) & 0x01) + 0x30));
