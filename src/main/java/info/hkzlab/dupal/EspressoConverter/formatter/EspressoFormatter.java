@@ -103,11 +103,19 @@ public class EspressoFormatter {
             ro = 0x00; // We'll set these as "don't care" for this type of link, as they can only be changed via a registered link
 
             // Print the inputs
-            int in_pin_cnt = 0 - pSpecs.getPinCount_IN() - io_ins_count;
+            int in_pin_cnt = 0;
+            int singleOutSelectionInput = -1;
+
+            // In case the selected single output to print corresponds to a feedback io, calculate which one we need to fetch from the source state
+            if(singleOutSelection >= pSpecs.getPinCount_O()) {
+                singleOutSelectionInput = pSpecs.getPinCount_IN() + (pSpecs.getPinCount_IO() - BitUtils.countBits(ioAsOutMask)) + (singleOutSelection - pSpecs.getPinCount_O());
+                System.out.println("singleOutSelectionInput " + singleOutSelectionInput);
+            }
+
             for(int idx = 0; idx < pSpecs.getPinCount_IN(); idx++, in_pin_cnt++) strBuf.append((char)(((ins >> idx) & 0x01) + 0x30));
             for(int idx = 0; idx < io_ins_count; idx++, in_pin_cnt++) strBuf.append((char)(((io_ins >> idx) & 0x01) + 0x30));
             for(int idx = 0; idx < io_fio_count; idx++, in_pin_cnt++) {
-                if(useSourceFIOs || (in_pin_cnt == singleOutSelection) || (singleOutSelection < 0)) {
+                if(useSourceFIOs || (in_pin_cnt == singleOutSelectionInput) || (singleOutSelection < 0)) {
                     boolean fio_pin_hiz = ((io_fio_hiz >> idx) & 0x01) != 0;
                     strBuf.append(fio_pin_hiz ? '-' : (char)(((io_fio >> idx) & 0x01) + 0x30));
                 } else {

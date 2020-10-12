@@ -96,12 +96,12 @@ public class EspressoFormatterTest
             "0000000000000011 1\n",
             "0000000000000101 0\n",
             "0000000000000111 -\n",
-            "1111110011111001 1\n",
-            "1111110011111010 -\n",
+            "1111110011111000 -\n",
+            "1111110011111011 1\n",
             "1111110011111111 -\n",
-            "1111111111111010 -\n",
-            "1111111111111101 -\n",
-            "1111111111111111 0\n"
+            "1111111111111000 -\n",
+            "1111111111111101 0\n",
+            "1111111111111111 -\n"
         };	
 
         assertArrayEquals("EspressoFormatter should build the correct truth table for specified states when a single output is selected", expected, tables[0]);	
